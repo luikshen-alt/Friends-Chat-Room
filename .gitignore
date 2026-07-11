@@ -1,0 +1,57 @@
+# ===== 依赖 =====
+node_modules/
+client/node_modules/
+
+# ===== 环境变量（包含敏感信息，绝对不能提交！） =====
+.env
+.env.local
+.env.production
+
+# ===== 数据库文件 =====
+*.db
+*.db-journal
+*.db-wal
+*.db-shm
+
+# ===== 上传文件（运行中产生） =====
+public/uploads/*
+!public/uploads/.gitkeep
+
+# ===== 日志 =====
+logs/
+*.log
+
+# ===== 构建产物（clone 后自己构建） =====
+client/dist/
+
+# ===== 操作系统 =====
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# ===== IDE =====
+.vscode/
+.idea/
+*.swp
+*.swo
+*~
+
+# ===== PM2 =====
+.pm2/
+dump.pm2
+
+# ===== 个人脚本（含硬编码路径，不适合共享） =====
+*.bat
+*.sh
+
+# ===== 文档（面试学习资料，不上传） =====
+docs/
+
+# ===== 测试/临时 =====
+coverage/
+.nyc_output/
+test-*.js
+*.tmp
+.nyc_output/
+test-*.js
+*.tmp

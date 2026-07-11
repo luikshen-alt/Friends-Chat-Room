@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>登录 - 朋友聊天室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-body">
+  <div class="card">
+    <h2>朋友聊天室</h2>
+    <div class="form-group">
+      <label>账号</label>
+      <input type="text" id="username" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="password" placeholder="请输入密码" autocomplete="current-password">
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <button class="btn btn-primary" onclick="login()">登 录</button>
+    <a href="register.html" class="link">还没有账号？去注册</a>
+  </div>
+
+  <script>
+    // ===== JWT Token 认证 =====
+    // 企业实践：Access Token 存内存（不是 localStorage！XSS 窃取不到）
+    // Refresh Token 存 HttpOnly Cookie（JS 完全无法访问）
+    // 面试话术："Token 不存 localStorage 是为了防 XSS"
+    let accessToken = null;
+
+    // 封装 fetch：自动附加 Authorization 头 + 过期自动刷新
+    async function authFetch(url, options = {}) {
+      const headers = { ...(options.headers || {}) };
+      if (accessToken) {
+        headers['Authorization'] = 'Bearer ' + accessToken;
+      }
+      const res = await fetch(url, { ...options, headers, credentials: 'same-origin' });
+      if (res.status === 401) {
+        const data = await res.json().catch(() => ({}));
+        if (data.code === 'TOKEN_EXPIRED') {
+          const refreshed = await refreshAccessToken();
+          if (refreshed) {
+            headers['Authorization'] = 'Bearer ' + accessToken;
+            return fetch(url, { ...options, headers, credentials: 'same-origin' });
+          }
+        }
+      }
+      return res;
+    }
+
+    async function refreshAccessToken() {
+      try {
+        const res = await fetch('/api/refresh', { method: 'POST', credentials: 'same-origin' });
+        const data = await res.json();
+        if (data.success && data.accessToken) { accessToken = data.accessToken; return true; }
+      } catch (e) {}
+      return false;
+    }
+
+    async function login() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const errorMsg = document.getElementById('errorMsg');
+
+      if (!username || !password) {
+        errorMsg.textContent = '请填写账号和密码';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      try {
+        const res = await fetch('/api/login', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ username, password }),
+          credentials: 'same-origin',
+        });
+        const data = await res.json();
+        if (data.success) {
+          accessToken = data.accessToken;
+          localStorage.setItem('chatUser', JSON.stringify(data.user));
+          window.location.href = 'main.html';
+        } else {
+          errorMsg.textContent = data.message || '登录失败';
+          errorMsg.style.display = 'block';
+        }
+      } catch {
+        errorMsg.textContent = '网络错误，请检查服务器是否运行';
+        errorMsg.style.display = 'block';
+      }
+    }
+
+    document.getElementById('password').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') login();
+    });
+  </script>
+</body>
+</html>

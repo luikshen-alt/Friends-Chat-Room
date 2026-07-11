@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>注册 - 朋友聊天室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="auth-body">
+  <div class="card">
+    <h2>注册新账号</h2>
+
+    <div class="form-group">
+      <label>账号</label>
+      <input type="text" id="username" placeholder="请输入账号" autocomplete="username">
+    </div>
+    <div class="form-group">
+      <label>密码</label>
+      <input type="password" id="password" placeholder="请输入密码" autocomplete="new-password">
+    </div>
+    <div class="form-group">
+      <label>昵称</label>
+      <input type="text" id="nickname" placeholder="请输入昵称">
+    </div>
+    <div class="form-group">
+      <label>验证码</label>
+      <input type="text" id="invitationCode" placeholder="向管理员索取验证码" maxlength="6">
+    </div>
+    <div class="error-msg" id="errorMsg"></div>
+    <button class="btn btn-primary" onclick="register()">注 册</button>
+    <a href="index.html" class="link">已有账号？去登录</a>
+  </div>
+
+  <script>
+    function register() {
+      const username = document.getElementById('username').value.trim();
+      const password = document.getElementById('password').value;
+      const nickname = document.getElementById('nickname').value.trim();
+      const invitationCode = document.getElementById('invitationCode').value.trim();
+      const errorMsg = document.getElementById('errorMsg');
+
+      if (!username || !password || !nickname || !invitationCode) {
+        errorMsg.textContent = '请填写所有字段';
+        errorMsg.style.display = 'block';
+        return;
+      }
+
+      fetch('/api/register', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password, nickname, invitationCode })
+      })
+      .then(res => res.json())
+      .then(data => {
+        if (data.success) {
+          alert('注册成功！请登录');
+          window.location.href = 'index.html';
+        } else {
+          errorMsg.textContent = data.message || '注册失败';
+          errorMsg.style.display = 'block';
+        }
+      })
+      .catch(() => {
+        errorMsg.textContent = '网络错误，请检查服务器是否运行';
+        errorMsg.style.display = 'block';
+      });
+    }
+
+    document.getElementById('invitationCode').addEventListener('keypress', function(e) {
+      if (e.key === 'Enter') register();
+    });
+  </script>
+</body>
+</html>

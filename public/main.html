@@ -1,0 +1,227 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+  <title>朋友聊天室</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body class="app-body">
+  <div class="app-wrap">
+    <div class="app-header">
+      <span id="headerTitle">消息</span>
+      <button class="header-btn hidden" id="headerAdd" onclick="showSearch()">+</button>
+    </div>
+
+    <div class="page-wrap">
+      <div class="page active" id="page-messages">
+        <div class="conv-list" id="convList"></div>
+      </div>
+      <div class="page" id="page-contacts">
+        <div class="search-bar"><input type="text" placeholder="搜索好友" id="contactSearch" oninput="filterContacts()"></div>
+        <div class="contact-list">
+          <div class="contact-item contact-special" onclick="showFriendRequests()">
+            <div class="contact-avatar contact-avatar-special">新</div>
+            <span style="flex:1;">新朋友</span>
+            <span class="conv-dot hidden" id="newFriendDot" style="position:static;width:18px;height:18px;border:none;font-size:11px;color:#fff;display:flex;align-items:center;justify-content:center;"></span>
+          </div>
+        </div>
+        <div class="contact-list" id="contactList"></div>
+      </div>
+      <div class="page" id="page-hall">
+        <div class="chat-container" style="height:calc(100vh - 100px);max-width:100%;">
+          <div class="chat-messages" id="hallMessages"></div>
+          <div class="chat-input-area">
+            <button class="img-btn" onclick="selectImage('hall')">+</button>
+            <input type="text" id="hallInput" placeholder="输入消息..." maxlength="500" onkeypress="if(event.key==='Enter')sendHall()">
+            <button onclick="sendHall()">发送</button>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-games">
+        <div class="game-grid" id="gameGrid">
+          <div class="game-card" onclick="openGame('poker')">
+            <div class="game-icon">&#127136;</div>
+            <div class="game-name">扑克牌</div>
+            <div class="game-desc">经典扑克小游戏</div>
+          </div>
+        </div>
+      </div>
+      <div class="page" id="page-me">
+        <div class="me-card">
+          <div class="me-avatar-wrap" onclick="changeAvatar()">
+            <img class="me-avatar" id="meAvatar" src="">
+            <div class="me-avatar-hint">点击更换</div>
+          </div>
+          <div class="me-info">
+            <div class="me-nickname" id="meNickname"></div>
+            <div class="me-username" id="meUsername"></div>
+          </div>
+        </div>
+        <div class="me-menu">
+          <div class="me-item" onclick="showEditName()">修改昵称</div>
+          <div class="me-item" onclick="showEditPwd()">修改密码</div>
+          <div class="me-item" onclick="logout()">退出登录</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="chatOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeChat()">&#8249; 返回</button>
+        <span id="chatTitle" onclick="onChatTitleClick()" style="cursor:pointer">聊天</span>
+      </div>
+      <div class="chat-messages" id="chatMessages"></div>
+      <div class="chat-input-area">
+        <button class="img-btn" onclick="selectImage('private')">+</button>
+        <input type="text" id="chatInput" placeholder="输入消息..." maxlength="500" onkeypress="if(event.key==='Enter')sendPrivate()">
+        <button onclick="sendPrivate()">发送</button>
+      </div>
+    </div>
+
+    <!-- 好友操作弹窗（点击私聊标题弹出） -->
+    <div class="overlay hidden friend-action-overlay" id="friendActionOverlay" onclick="closeFriendActionMenu(event)">
+      <div class="friend-action-sheet" onclick="event.stopPropagation()">
+        <div class="friend-action-title" id="friendActionTitle"></div>
+        <button class="friend-action-btn" onclick="promptFriendRemark()">设置备注</button>
+        <button class="friend-action-btn danger" onclick="confirmRemoveFriend()">删除好友</button>
+        <button class="friend-action-btn cancel" onclick="closeFriendActionMenu()">取消</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="searchOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeSearch()">&#8249; 返回</button>
+        <span>添加好友</span>
+      </div>
+      <div class="search-bar" style="padding:12px 16px;background:#fff;">
+        <input type="text" id="searchInput" placeholder="输入账号或昵称搜索" onkeypress="if(event.key==='Enter')doSearch()">
+        <button class="btn btn-primary" onclick="doSearch()" style="width:auto;padding:8px 20px;margin-top:8px;">搜索</button>
+      </div>
+      <div class="search-results" id="searchResults"></div>
+    </div>
+
+    <div class="overlay hidden" id="editNameOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeEditName()">&#8249; 返回</button>
+        <span>修改昵称</span>
+      </div>
+      <div class="card" style="margin:20px auto;">
+        <div class="form-group"><label>新昵称</label><input type="text" id="newNickname" placeholder="输入新昵称"></div>
+        <button class="btn btn-primary" onclick="saveNickname()">保存</button>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="editPwdOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeEditPwd()">&#8249; 返回</button>
+        <span>修改密码</span>
+      </div>
+      <div class="card" style="margin:20px auto;">
+        <div class="form-group"><label>旧密码</label><input type="password" id="oldPwd"></div>
+        <div class="form-group"><label>新密码</label><input type="password" id="newPwd"></div>
+        <button class="btn btn-primary" onclick="savePassword()">保存</button>
+      </div>
+    </div>
+
+    <div class="img-preview hidden" id="imgPreview" onclick="this.classList.add('hidden')">
+      <img id="previewImg" src="">
+    </div>
+
+    <div class="overlay hidden" id="friendRequestOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeFriendRequests()">&#8249; 返回</button>
+        <span>新朋友</span>
+      </div>
+      <div class="search-results" id="friendRequestList" style="flex:1;overflow-y:auto;"></div>
+    </div>
+
+    <div class="overlay hidden" id="pokerOverlay">
+      <div class="chat-header">
+        <button class="back-btn" onclick="closeGame()">&#8249; 返回</button>
+        <span>扑克牌</span>
+      </div>
+      <div class="game-stage">
+        <div class="poker-lobby">
+          <div class="poker-lobby-icon">&#127136;</div>
+          <div class="poker-lobby-title">四人扑克</div>
+          <div class="poker-lobby-desc">创建房间后，邀请 3 位好友一起对局</div>
+          <button class="btn btn-primary poker-create-btn" onclick="createPokerRoom()">创建房间</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="overlay hidden" id="pokerRoomOverlay">
+      <div class="chat-header poker-room-header">
+        <button class="back-btn" onclick="leavePokerRoom()">&#8249; 离开</button>
+        <span id="pokerRoomTitle">扑克房间</span>
+        <button class="poker-fullscreen-btn" id="pokerFullscreenBtn" onclick="togglePokerFullscreen()" title="全屏">⛶</button>
+      </div>
+      <div class="poker-game-info hidden" id="pokerGameInfo"></div>
+      <div class="poker-table">
+        <div class="poker-seat seat-top" id="poker-pos-2"></div>
+        <div class="poker-seat seat-left" id="poker-pos-3"></div>
+        <div class="poker-seat seat-right" id="poker-pos-1"></div>
+        <div class="poker-seat seat-bottom" id="poker-pos-0"></div>
+        <div class="poker-center" id="pokerCenter">
+          <div class="poker-center-count" id="pokerCount">1 / 4</div>
+          <div class="poker-current-trick hidden" id="pokerCurrentTrick"></div>
+          <div class="poker-turn-pointer hidden" id="pokerTurnPointer"></div>
+          <div class="poker-center-actions">
+            <button class="poker-action-btn poker-ready-btn" id="pokerReadyBtn" onclick="togglePokerReady()">准备</button>
+            <button class="poker-action-btn poker-invite-action-btn" id="pokerInviteBtn" onclick="showPokerInvite()">邀请</button>
+            <button class="poker-action-btn poker-pass-btn hidden" id="pokerPassBtn" onclick="pokerPass()">过</button>
+            <button class="poker-action-btn poker-play-btn hidden" id="pokerPlayBtn" onclick="pokerPlay()">出牌</button>
+          </div>
+        </div>
+      </div>
+      <div class="poker-my-hand hidden" id="pokerMyHand"></div>
+      <div class="overlay hidden" id="pokerRoundEndOverlay">
+        <div class="poker-round-end-panel">
+          <h3>本局结束</h3>
+          <div id="pokerRoundEndBody"></div>
+          <button class="poker-action-btn poker-ready-btn" onclick="closeRoundEndAndReady()">准备下一把</button>
+        </div>
+      </div>
+      <!-- 全屏模式下的浮动工具条（离开 / 邀请 / 退出全屏）-->
+      <div class="poker-fs-toolbar" id="pokerFsToolbar">
+        <button class="poker-fs-tool-btn" onclick="leavePokerRoom()" title="离开房间">&#8249; 离开</button>
+        <button class="poker-fs-tool-btn" onclick="showPokerInvite()" title="邀请好友">+ 邀请</button>
+        <button class="poker-fs-tool-btn" onclick="togglePokerFullscreen()" title="退出全屏">&#10005;</button>
+      </div>
+      <!-- 本轮累积分数徽章（左上角，与全屏工具条对称）-->
+      <div class="poker-trick-score-badge hidden" id="pokerTrickScoreBadge">本轮 0 分</div>
+      <!-- 邀请弹窗放在房间内部，确保原生全屏时也能显示 -->
+      <div class="overlay hidden" id="pokerInviteOverlay">
+        <div class="chat-header">
+          <button class="back-btn" onclick="closePokerInvite()">&#8249; 返回</button>
+          <span>邀请好友加入房间</span>
+        </div>
+        <div class="search-results" id="pokerInviteList" style="flex:1;overflow-y:auto;"></div>
+      </div>
+    </div>
+
+    <input type="file" id="fileInput" accept="image/*" class="hidden" onchange="onFileSelected(event)">
+    <input type="file" id="avatarInput" accept="image/*" class="hidden" onchange="onAvatarSelected(event)">
+
+    <div class="tab-bar" id="tabBar">
+      <div class="tab-item active" onclick="switchTab('messages')">
+        <div class="tab-icon">&#9993;</div><div class="tab-label">消息</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('contacts')">
+        <div class="tab-icon">&#128100;</div><div class="tab-label">通讯录</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('games')">
+        <div class="tab-icon">&#127918;</div><div class="tab-label">游戏</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('hall')">
+        <div class="tab-icon">&#127758;</div><div class="tab-label">大厅</div>
+      </div>
+      <div class="tab-item" onclick="switchTab('me')">
+        <div class="tab-icon">&#128100;</div><div class="tab-label">我</div>
+      </div>
+    </div>
+  </div>
+  <script src="js/app.js"></script>
+</body>
+</html>

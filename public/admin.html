@@ -1,0 +1,304 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>管理后台 - 朋友聊天室</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    .admin-container { width: 95%; max-width: 900px; padding: 20px; }
+    .admin-section { background: #fff; border-radius: 12px; padding: 20px; box-shadow: 0 2px 10px rgba(0,0,0,0.08); }
+    .admin-section h3 { margin-bottom: 14px; color: #333; font-size: 18px; border-left: 4px solid #667eea; padding-left: 10px; }
+    table { width: 100%; border-collapse: collapse; font-size: 14px; }
+    th, td { padding: 10px 8px; text-align: left; border-bottom: 1px solid #eee; }
+    th { color: #888; font-weight: 500; background: #f8f9ff; }
+    .badge { display: inline-block; padding: 3px 10px; border-radius: 12px; font-size: 12px; }
+    .badge-green { background: #d4edda; color: #155724; }
+    .badge-gray { background: #e2e3e5; color: #383d41; }
+    .badge-red { background: #f8d7da; color: #721c24; }
+    .btn-small { padding: 5px 12px; font-size: 13px; border: none; border-radius: 6px; cursor: pointer; }
+    .btn-danger { background: #dc3545; color: #fff; }
+    .btn-danger:hover { background: #c82333; }
+    .code-big { font-size: 36px; font-weight: bold; color: #764ba2; letter-spacing: 6px; text-align: center; margin: 10px 0; font-family: 'Courier New', monospace; }
+    .countdown { text-align: center; color: #888; font-size: 14px; margin-bottom: 10px; }
+    .login-overlay { position: fixed; inset: 0; background: rgba(0,0,0,0.6); display: flex; justify-content: center; align-items: center; z-index: 100; }
+    .login-box { background: #fff; padding: 30px; border-radius: 16px; width: 320px; text-align: center; }
+    .login-box h3 { margin-bottom: 16px; }
+    .login-box input { width: 100%; padding: 12px; border: 1px solid #ddd; border-radius: 10px; font-size: 15px; margin-bottom: 12px; outline: none; }
+    .hidden { display: none !important; }
+    .tab-nav { display: flex; gap: 8px; margin-bottom: 20px; background: rgba(255,255,255,0.2); padding: 6px; border-radius: 12px; }
+    .tab-btn { flex: 1; padding: 12px; border: none; border-radius: 8px; font-size: 15px; font-weight: 600; cursor: pointer; background: transparent; color: rgba(255,255,255,0.8); transition: all 0.2s; }
+    .tab-btn.active { background: #fff; color: #764ba2; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+    .tab-content { display: none; }
+    .tab-content.active { display: block; }
+    .url-box { background: #f0f4ff; border: 1px dashed #667eea; border-radius: 10px; padding: 16px; text-align: center; margin: 16px 0; }
+    .url-box .url { font-size: 18px; font-weight: bold; color: #764ba2; word-break: break-all; }
+    .url-box .hint { font-size: 13px; color: #888; margin-top: 6px; }
+    .status-badge { display: inline-block; padding: 4px 14px; border-radius: 20px; font-size: 14px; font-weight: 600; }
+    .status-online { background: #d4edda; color: #155724; }
+    .status-offline { background: #f8d7da; color: #721c24; }
+    .pw-text { font-size: 12px; color: #999; font-family: monospace; }
+    @media (max-width: 600px) {
+      .admin-container { width: 100%; padding: 10px; }
+      .admin-section { padding: 14px; }
+      th, td { padding: 8px 4px; font-size: 12px; }
+      .tab-btn { font-size: 13px; padding: 10px 4px; }
+    }
+  </style>
+</head>
+<body>
+  <div class="login-overlay" id="loginOverlay">
+    <div class="login-box">
+      <h3>管理员登录</h3>
+      <input type="password" id="adminPwd" placeholder="请输入管理密码" onkeypress="if(event.key==='Enter')adminLogin()">
+      <button class="btn btn-primary" onclick="adminLogin()">进入管理后台</button>
+      <div class="error-msg" id="loginError" style="margin-top:10px;"></div>
+      <a href="index.html" class="link" style="margin-top:12px;">返回首页</a>
+    </div>
+  </div>
+
+  <div class="admin-container hidden" id="adminPanel">
+    <div style="text-align:center;margin-bottom:20px;">
+      <h2 style="color:#fff;">管理后台</h2>
+      <p style="color:rgba(255,255,255,0.8);font-size:14px;">只有你自己能访问这个页面</p>
+    </div>
+
+    <div class="tab-nav">
+      <button class="tab-btn active" onclick="switchTab(0)">验证码管理</button>
+      <button class="tab-btn" onclick="switchTab(1)">用户管理</button>
+      <button class="tab-btn" onclick="switchTab(2)">服务启动</button>
+    </div>
+
+    <!-- Tab 1: 验证码管理 -->
+    <div class="tab-content active" id="tab0">
+      <div class="admin-section">
+        <h3>生成验证码</h3>
+        <div class="code-big" id="codeDisplay">------</div>
+        <div class="countdown" id="codeTimer">点击生成获取验证码</div>
+        <div style="text-align:center;">
+          <button class="btn btn-primary" onclick="generateCode()" style="width:auto;padding:10px 28px;">生成新验证码</button>
+        </div>
+      </div>
+      <div class="admin-section" style="margin-top:16px;">
+        <h3>验证码记录</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>验证码</th><th>状态</th><th>生成时间</th><th>操作</th></tr>
+            </thead>
+            <tbody id="codeTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 2: 用户管理 -->
+    <div class="tab-content" id="tab1">
+      <div class="admin-section">
+        <h3>注册用户列表</h3>
+        <div style="overflow-x:auto;">
+          <table>
+            <thead>
+              <tr><th>ID</th><th>账号</th><th>密码</th><th>昵称</th><th>注册时间</th><th>操作</th></tr>
+            </thead>
+            <tbody id="userTable"></tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Tab 3: 服务启动 -->
+    <div class="tab-content" id="tab2">
+      <div class="admin-section">
+        <h3>公网服务状态</h3>
+        <div style="text-align:center;margin:16px 0;">
+          <span class="status-badge status-offline" id="ngrokStatus">未运行</span>
+        </div>
+        <div class="url-box" id="urlBox" style="display:none;">
+          <div class="url" id="ngrokUrl">------</div>
+          <div class="hint">把这个链接发给朋友，朋友在任何地方都能访问</div>
+          <button class="btn btn-secondary" onclick="copyUrl()" style="width:auto;padding:8px 20px;margin-top:10px;">复制链接</button>
+        </div>
+        <div style="text-align:center;margin-top:20px;">
+          <button class="btn btn-primary" onclick="startNgrok()" style="width:auto;padding:10px 28px;margin-right:10px;">启动公网服务</button>
+          <button class="btn btn-danger" onclick="stopNgrok()" style="width:auto;padding:10px 28px;">停止公网服务</button>
+        </div>
+        <div style="text-align:center;margin-top:14px;">
+          <button class="btn btn-secondary" onclick="refreshStatus()" style="width:auto;padding:8px 20px;">刷新状态</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <script>
+    const ADMIN_PASSWORD = 'admin888';
+    let countdownInterval = null;
+    let currentTab = 0;
+
+    function adminLogin() {
+      const pwd = document.getElementById('adminPwd').value;
+      const err = document.getElementById('loginError');
+      if (pwd !== ADMIN_PASSWORD) {
+        err.textContent = '密码错误';
+        err.style.display = 'block';
+        return;
+      }
+      document.getElementById('loginOverlay').classList.add('hidden');
+      document.getElementById('adminPanel').classList.remove('hidden');
+      loadCodes();
+      loadUsers();
+      refreshStatus();
+    }
+
+    function switchTab(index) {
+      currentTab = index;
+      document.querySelectorAll('.tab-btn').forEach((btn, i) => {
+        btn.classList.toggle('active', i === index);
+      });
+      document.querySelectorAll('.tab-content').forEach((content, i) => {
+        content.classList.toggle('active', i === index);
+      });
+      if (index === 0) loadCodes();
+      if (index === 1) loadUsers();
+      if (index === 2) refreshStatus();
+    }
+
+    function generateCode() {
+      fetch('/api/generate-code', { method: 'POST' })
+        .then(res => res.json())
+        .then(data => {
+          if (data.success) {
+            document.getElementById('codeDisplay').textContent = data.code;
+            startCountdown(120);
+            loadCodes();
+          }
+        })
+        .catch(() => {
+          document.getElementById('codeTimer').textContent = '生成失败';
+        });
+    }
+
+    function startCountdown(seconds) {
+      const timerEl = document.getElementById('codeTimer');
+      if (countdownInterval) clearInterval(countdownInterval);
+      timerEl.textContent = `有效期剩余 ${seconds} 秒`;
+      countdownInterval = setInterval(() => {
+        seconds--;
+        if (seconds <= 0) {
+          clearInterval(countdownInterval);
+          timerEl.textContent = '验证码已过期';
+          document.getElementById('codeDisplay').textContent = '------';
+        } else {
+          timerEl.textContent = `有效期剩余 ${seconds} 秒`;
+        }
+      }, 1000);
+    }
+
+    function loadCodes() {
+      fetch('/api/admin/codes')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) return;
+          const tbody = document.getElementById('codeTable');
+          tbody.innerHTML = '';
+          data.codes.forEach(c => {
+            const tr = document.createElement('tr');
+            let badgeClass = 'badge-green';
+            if (c.used) badgeClass = 'badge-gray';
+            else if (c.expired) badgeClass = 'badge-red';
+            tr.innerHTML = `
+              <td>${c.code}</td>
+              <td><span class="badge ${badgeClass}">${c.expiredText}</span></td>
+              <td>${new Date(c.created_at).toLocaleString('zh-CN')}</td>
+              <td><button class="btn-small btn-danger" onclick="deleteCode(${c.id})">删除</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function loadUsers() {
+      fetch('/api/admin/users')
+        .then(res => res.json())
+        .then(data => {
+          if (!data.success) return;
+          const tbody = document.getElementById('userTable');
+          tbody.innerHTML = '';
+          data.users.forEach(u => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+              <td>${u.id}</td>
+              <td>${u.username}</td>
+              <td><span class="pw-text">${u.password || ''}</span></td>
+              <td>${u.nickname}</td>
+              <td>${new Date(u.created_at).toLocaleString('zh-CN')}</td>
+              <td><button class="btn-small btn-danger" onclick="deleteUser('${u.username}')">删除</button></td>
+            `;
+            tbody.appendChild(tr);
+          });
+        });
+    }
+
+    function deleteCode(id) {
+      if (!confirm('确定删除此验证码？')) return;
+      fetch('/api/admin/delete-code', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ id })
+      })
+      .then(res => res.json())
+      .then(() => loadCodes());
+    }
+
+    function deleteUser(username) {
+      if (!confirm(`确定删除用户 ${username}？\n删除后该账号将无法再登录，但可以重新注册同名账号。`)) return;
+      fetch('/api/admin/delete-user', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username })
+      })
+      .then(res => res.json())
+      .then(() => loadUsers());
+    }
+
+    async function refreshStatus() {
+      const res = await fetch('/api/admin/ngrok-status');
+      const data = await res.json();
+      const statusEl = document.getElementById('ngrokStatus');
+      const urlBox = document.getElementById('urlBox');
+      const urlEl = document.getElementById('ngrokUrl');
+      if (data.running && data.url) {
+        statusEl.textContent = '运行中';
+        statusEl.className = 'status-badge status-online';
+        urlEl.textContent = data.url;
+        urlBox.style.display = 'block';
+      } else {
+        statusEl.textContent = '未运行';
+        statusEl.className = 'status-badge status-offline';
+        urlBox.style.display = 'none';
+      }
+    }
+
+    async function startNgrok() {
+      const res = await fetch('/api/admin/ngrok-start', { method: 'POST' });
+      const data = await res.json();
+      alert(data.message);
+      if (data.success) {
+        setTimeout(refreshStatus, 3000);
+      }
+    }
+
+    async function stopNgrok() {
+      const res = await fetch('/api/admin/ngrok-stop', { method: 'POST' });
+      const data = await res.json();
+      alert(data.message);
+      refreshStatus();
+    }
+
+    function copyUrl() {
+      const url = document.getElementById('ngrokUrl').textContent;
+      navigator.clipboard.writeText(url).then(() => alert('链接已复制'));
+    }
+  </script>
+</body>
+</html>
