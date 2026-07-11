@@ -2,7 +2,7 @@
  * 扑克房间 — 完整四人牌桌
  * 通过 props 接收房间状态和手牌（不再使用 window hack）
  */
-import React, { useState, useEffect } from 'react';
+import { useState, useEffect } from 'react';
 import { useAuth } from '../store/AuthContext';
 import { api } from '../api/client';
 import type { PokerRoom as PokerRoomType, PokerCard, Friend, FriendListResponse } from '../types';
@@ -117,11 +117,6 @@ export default function PokerRoom({ sendMessage, onClose, initialRoom, handCards
     if (!isFullscreen) document.documentElement.requestFullscreen?.().catch(() => {});
     else document.exitFullscreen?.().catch(() => {});
   }
-  function getPlayerDisplay(p: typeof room extends {players:infer T}?T:never) {
-    const f = (window as unknown as Record<string,unknown>).__friends as Friend[] | undefined;
-    const friend = f?.find(x => x.username === p.username);
-    return friend?.remark || p.nickname;
-  }
 
   // ===== 大厅 =====
   if (!room) {
@@ -154,10 +149,10 @@ export default function PokerRoom({ sendMessage, onClose, initialRoom, handCards
       {dealInfo && (
         <div className="poker-info-bar">
           <span>随机数: <b>{String(dealInfo.magicN)}</b></span>
-          {dealInfo.keyCard && <span>明牌: {formatCard(dealInfo.keyCard as PokerCard)}</span>}
+          {!!dealInfo.keyCard && <span>明牌: {formatCard(dealInfo.keyCard as PokerCard)}</span>}
           <span>先手: <b>{String(dealInfo.firstPlayerUsername)}</b></span>
           <span>队友: <b>{String(dealInfo.teammateUsername)}</b></span>
-          {dealInfo.swapped && <span style={{color:'#f5c542'}}>(已自动换座)</span>}
+          {!!dealInfo.swapped && <span style={{color:'#f5c542'}}>(已自动换座)</span>}
         </div>
       )}
 

@@ -2,7 +2,7 @@
  * 注册页面 — 带字段级错误提示
  * 企业实践：后端校验结果精确映射到对应输入框，帮助用户快速修正
  */
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 

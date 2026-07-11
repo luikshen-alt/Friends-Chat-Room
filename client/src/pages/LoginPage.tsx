@@ -2,7 +2,7 @@
  * 登录页面
  * 企业实践：表单状态管理、错误提示、Enter 键提交、加载态
  */
-import React, { useState, useEffect, FormEvent } from 'react';
+import { useState, useEffect, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { useAuth } from '../store/AuthContext';
 

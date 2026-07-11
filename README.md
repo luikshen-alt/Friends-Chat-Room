@@ -18,7 +18,7 @@
 | **前端** | React 18 + TypeScript + Vite |
 | **后端** | Node.js + Express |
 | **实时通信** | WebSocket (ws) |
-| **数据库** | SQLite (better-sqlite3) |
+| **数据库** | SQLite |
 | **认证** | JWT Access Token + Refresh Token (HttpOnly Cookie) |
 | **安全** | Helmet + CORS + Rate Limiting + express-validator |
 | **工具** | pino 日志、PM2 进程管理、Docker 容器化 |
@@ -135,8 +135,15 @@ npm run dev:client
 ### Docker 部署
 
 ```bash
+# 方式一：docker-compose（推荐）
 docker-compose up -d
+
+# 方式二：手动构建运行
+docker build -t chat-app .
+docker run -d --name chat-app -p 3000:3000 -v $(pwd)/.env:/app/.env:ro chat-app
 ```
+
+> 注意：Docker 运行前需要先创建好 `.env` 文件。数据库文件存储在容器内，重建容器会丢失数据。
 
 ## 项目管理后台
 
