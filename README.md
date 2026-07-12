@@ -37,9 +37,9 @@
 │       ├── store/         # 状态管理（AuthContext）
 │       ├── pages/         # 页面组件
 │       └── types/         # TypeScript 类型定义
-├── public/               # （保留）原生 HTML 版本前端
-├── docs/                 # 项目文档
+├── public/               # 原生 HTML 版前端（备用）
 ├── ecosystem.config.js   # PM2 配置
+├── start.bat             # Windows 一键启动脚本
 ├── Dockerfile            # 容器构建文件
 └── docker-compose.yml    # 容器编排
 ```
@@ -87,6 +87,7 @@ cd client && npm install && npm run build && cd ..
 ### 4. 启动
 
 ```bash
+	# Windows 一键启动：双击 start.bat
 # 开发模式
 npm start
 
@@ -110,7 +111,7 @@ npx pm2 start ecosystem.config.js
 
 ### 公网访问（手机访问）
 
-项目内置 ngrok 隧道管理，在管理后台点击「启动隧道」即可生成公网地址。
+本地启动时，管理后台内置 ngrok 隧道，点击「启动隧道」即可生成公网地址（Docker 部署不支持）。
 
 如需使用你自己的 ngrok 账号：
 

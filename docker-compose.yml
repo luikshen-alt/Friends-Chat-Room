@@ -10,4 +10,5 @@ services:
       - ./.env:/app/.env:ro
     restart: unless-stopped
     environment:
-      - NODE_ENV=production
+      - NODE_ENV=development
+      # 使用 ngrok 等 HTTPS 域名时，在 .env 中设置 COOKIE_SECURE=true

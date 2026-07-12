@@ -94,9 +94,9 @@ function handleRefreshToken(req, res) {
     // 设置新的 Refresh Token Cookie
     res.cookie('refreshToken', newRefreshToken, {
       httpOnly: true,  // JS 无法访问 → 防 XSS
-      secure: process.env.NODE_ENV === 'production', // 生产环境仅 HTTPS
-      sameSite: 'lax', // 防 CSRF
-      maxAge: 7 * 24 * 60 * 60 * 1000, // 7 天
+      secure: process.env.COOKIE_SECURE === 'true', // 仅 HTTPS 环境开启（ngrok/线上）
+      sameSite: 'lax',
+      maxAge: 7 * 24 * 60 * 60 * 1000,
       path: '/',
     });
 
@@ -115,7 +115,7 @@ function setRefreshTokenCookie(res, user) {
   const refreshToken = generateRefreshToken(user);
   res.cookie('refreshToken', refreshToken, {
     httpOnly: true,
-    secure: process.env.NODE_ENV === 'production',
+    secure: process.env.COOKIE_SECURE === 'true',
     sameSite: 'lax',
     maxAge: 7 * 24 * 60 * 60 * 1000,
     path: '/',
